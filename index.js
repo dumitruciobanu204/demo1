@@ -17,12 +17,14 @@ const PORT = process.env.PORT || 8080;
 
 app.use(bodyParser.json());
 
-const corsOptions = {
-    origin: 'https://moldova-six.vercel.app/', // Origin-ul tău
-    optionsSuccessStatus: 200
-};
+app.use((req, res, next) => {
+    res.header('Access-Control-Allow-Origin', 'https://moldova-six.vercel.app'); // Origin-ul tău
+    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+    next();
+});
 
-app.use(cors(corsOptions));
+app.use(cors());
 
 // Endpoint to send a registration link to the user's email.
 app.post('/registration-link', sendRegistrationLink);
