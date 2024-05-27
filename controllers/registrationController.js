@@ -77,7 +77,7 @@ exports.sendRegistrationLink = async (req, res) => {
 
         await sendRegistrationEmail(email, registrationLink);
         await saveRegistration(email, registrationLink);
-        res.status(200).json({ msg: 'Email sent' });
+        res.status(200).send('Email sent');
     } catch (error) {
         console.error('Error sending email or saving registration:', error);
         res.status(500).send('Error sending email');
