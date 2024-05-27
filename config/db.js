@@ -1,6 +1,5 @@
 const { Pool } = require('pg');
 require('dotenv').config();
-const moment = require('moment-timezone');
 
 const pool = new Pool({
     host: process.env.PGHOST,
@@ -25,12 +24,12 @@ pool.on('error', (err) => {
 const expiryTime = process.env.JWT_LIFE_SPAN;
 
 const deleteExpiredRecords = async () => {
-    const currentTime = moment.utc(); // Get current time in UTC
-    const expiryTimestamp = currentTime.clone().subtract(expiryTime, 'milliseconds'); // Subtract expiryTime milliseconds
+    const currentTime = new Date();
+    const expiryTimestamp = new Date(currentTime - expiryTime);
 
     const client = await pool.connect();
 
-    const queryParams = [expiryTimestamp.format()]; // Format expiryTimestamp
+    const queryParams = [expiryTimestamp.toISOString()];
 
     try {
         // Delete from temporary_users
@@ -41,7 +40,7 @@ const deleteExpiredRecords = async () => {
         const deletePasswordResetRequestsQuery = 'DELETE FROM password_reset_requests WHERE created_at <= $1';
         await client.query(deletePasswordResetRequestsQuery, queryParams);
     
-        console.log(`${currentTime} - Expired records deleted successfully`);
+        // console.log(`${currentTime} - Expired records deleted successfully`);
 
     } catch (error) {
         console.error('Error deleting expired records:', error);
