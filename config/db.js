@@ -33,11 +33,11 @@ const deleteExpiredRecords = async () => {
 
     try {
         // Delete from temporary_users
-        const deleteTemporaryUsersQuery = 'DELETE FROM temporary_users WHERE created_at <= $1';
+        const deleteTemporaryUsersQuery = 'DELETE * FROM temporary_users WHERE created_at <= $1';
         await client.query(deleteTemporaryUsersQuery, queryParams);
     
         // Delete from password_reset_requests
-        const deletePasswordResetRequestsQuery = 'DELETE FROM password_reset_requests WHERE created_at <= $1';
+        const deletePasswordResetRequestsQuery = 'DELETE * FROM password_reset_requests WHERE created_at <= $1';
         await client.query(deletePasswordResetRequestsQuery, queryParams);
     
         // console.log(`${currentTime} - Expired records deleted successfully`);
