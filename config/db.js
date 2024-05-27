@@ -40,7 +40,7 @@ const deleteExpiredRecords = async () => {
         const deletePasswordResetRequestsQuery = 'DELETE FROM password_reset_requests WHERE created_at <= $1';
         await client.query(deletePasswordResetRequestsQuery, queryParams);
     
-        // console.log(`${currentTime} - Expired records deleted successfully`);
+        console.log(`${currentTime} - Expired records deleted successfully`);
 
     } catch (error) {
         console.error('Error deleting expired records:', error);
