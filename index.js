@@ -42,6 +42,11 @@ app.post('/resend-reset-password-link', resendResetPasswordLink);
 // Ednpoint to reset password
 app.post('/reset-password', verifyPasswordResetToken, resetPassword);
 
+// 
+app.get('/users', (req, res) => {
+    res.send('qweqwe');
+});
+
 app.listen(PORT, () => {
     console.log(`app on port ${PORT}`);
 });
