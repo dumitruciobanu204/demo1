@@ -52,7 +52,7 @@ app.post('/reset-password', verifyPasswordResetToken, resetPassword);
 
 // 
 app.get('/users', (req, res) => {
-    res.send('qweqwe');
+    res.json({ msg: 'qweqwe' });
 });
 
 app.listen(PORT, () => {
