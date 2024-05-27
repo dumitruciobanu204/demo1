@@ -9,8 +9,8 @@ const { generateRegistrationLink } = require('../utils/jwtHelper');
 // Helper function to check if email exists in the database
 async function checkIfEmailExists(email) {
     // console.log('Executing checkIfEmailExists function');
-    const queryTemp = 'SELECT 1 FROM temporary_users WHERE email = $1';
-    const queryUsers = 'SELECT 1 FROM users WHERE email = $1';
+    const queryTemp = 'SELECT * FROM temporary_users WHERE email = $1';
+    const queryUsers = 'SELECT * FROM users WHERE email = $1';
     const values = [email];
 
     try {
