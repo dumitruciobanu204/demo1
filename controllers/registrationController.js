@@ -8,7 +8,6 @@ const { generateRegistrationLink } = require('../utils/jwtHelper');
 
 // Helper function to check if email exists in the database
 async function checkIfEmailExists(email) {
-    // console.log('Executing checkIfEmailExists function');
     const queryTemp = 'SELECT * FROM temporary_users WHERE email = $1';
     const queryUsers = 'SELECT * FROM users WHERE email = $1';
     const values = [email];
@@ -33,7 +32,6 @@ async function checkIfEmailExists(email) {
 
 // Helper function to get registration details by email
 async function getRegistrationByEmail(email) {
-    // console.log('Executing getRegistrationByEmail function');
     const query = 'SELECT * FROM temporary_users WHERE email = $1';
     const values = [email];
 
@@ -48,12 +46,12 @@ async function getRegistrationByEmail(email) {
 
 // Helper function to save registration to the temporary_users table
 async function saveRegistration(email, token) {
-    // console.log('Executing saveRegistration function');
+    const expiresAt = new Date(Date.now() + parseInt(process.env.JWT_LIFE_SPAN));
     const query = `
-        INSERT INTO temporary_users (email, registration_link)
-        VALUES ($1, $2)
+        INSERT INTO temporary_users (email, registration_link, expires_at)
+        VALUES ($1, $2, $3)
     `;
-    const values = [email, token];
+    const values = [email, token, expiresAt];
 
     try {
         await pool.query(query, values);
@@ -65,7 +63,6 @@ async function saveRegistration(email, token) {
 
 // Exported function to send registration link
 exports.sendRegistrationLink = async (req, res) => {
-    // console.log('Executing sendRegistrationLink function');
     const { email } = req.body;
     const registrationLink = generateRegistrationLink(email);
 
@@ -86,7 +83,6 @@ exports.sendRegistrationLink = async (req, res) => {
 
 // Exported function to resend registration link
 exports.resendRegistrationLink = async (req, res) => {
-    // console.log('Executing resendRegistrationLink function');
     const { email } = req.body;
 
     try {
@@ -105,7 +101,6 @@ exports.resendRegistrationLink = async (req, res) => {
 
 // Exported function to permanently register user
 exports.registerUser = async (req, res) => {
-    // console.log('Executing registerUser function');
     const { dob, name, password, surname } = req.body;
     const { query } = url.parse(req.url, true);
     const email = query.email;

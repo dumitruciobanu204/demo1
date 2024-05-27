@@ -7,9 +7,6 @@ dotenv.config();
 module.exports = async (req, res, next) => {
     const { token, email } = req.query;
 
-    // console.log(token);
-    // console.log(email);
-
     if (!token || !email) {
         return res.status(400).json({ error: 'Token and email are required' });
     }
@@ -18,21 +15,28 @@ module.exports = async (req, res, next) => {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         const query = 'SELECT * FROM temporary_users WHERE registration_link = $1 AND email = $2';
-        const values = [`${req.protocol}://${req.get('host')}${req.originalUrl}`, email];
+        const values = [token, email];
         const result = await pool.query(query, values);
-
-        // console.log('Query Result:', result.rows);
 
         if (result.rowCount === 0) {
             return res.status(401).json({ error: 'Link not found in the database or email does not match' });
         }
 
+        const tokenExpiration = new Date(decoded.exp * 1000);
+        const now = new Date();
+
+        if (tokenExpiration < now) {
+            await pool.query('DELETE FROM temporary_users WHERE registration_link = $1 AND email = $2', values);
+            return res.status(401).json({ error: 'Link has expired and has been removed' });
+        }
+
         req.decodedToken = decoded;
-
-        // res.locals.email = email;
-
         next();
     } catch (error) {
+        if (error.name === 'TokenExpiredError') {
+            await pool.query('DELETE FROM temporary_users WHERE registration_link = $1 AND email = $2', [token, email]);
+            return res.status(401).json({ error: 'Link expired and has been removed' });
+        }
         res.status(401).json({ error: 'Link invalid or expired' });
     }
 };
