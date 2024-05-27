@@ -16,7 +16,13 @@ const app = express();
 const PORT = process.env.PORT || 8080;
 
 app.use(bodyParser.json());
-app.use(cors());
+
+const corsOptions = {
+    origin: 'https://moldova-six.vercel.app/', // Origin-ul tău
+    optionsSuccessStatus: 200
+};
+
+app.use(cors(corsOptions));
 
 // Endpoint to send a registration link to the user's email.
 app.post('/registration-link', sendRegistrationLink);
