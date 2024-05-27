@@ -8,7 +8,7 @@ const BASE_URL = process.env.BASE_URL;
 
 // Helper function to generate registration link
 function generateRegistrationLink(email) {
-    const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '30m' });
+    const token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: '3m' });
     return `${BASE_URL}/register?token=${token}&email=${encodeURIComponent(email)}`;
 };
 
