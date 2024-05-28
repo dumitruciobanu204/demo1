@@ -1,8 +1,5 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
-const saltRounds = 10;
-const url = require('url');
-
 const { sendRegistrationEmail } = require('../utils/emailSender');
 const { generateRegistrationLink } = require('../utils/jwtHelper');
 
@@ -28,7 +25,7 @@ async function checkIfEmailExists(email) {
         console.error('Error checking email existence:', error);
         throw error;
     }
-};
+}
 
 // Helper function to get registration details by email
 async function getRegistrationByEmail(email) {
@@ -42,24 +39,7 @@ async function getRegistrationByEmail(email) {
         console.error('Error fetching temporary_users by email:', error);
         throw error;
     }
-};
-
-// Helper function to save registration to the temporary_users table
-async function saveRegistration(email, token) {
-    const expiresAt = new Date(Date.now() + parseInt(process.env.JWT_LIFE_SPAN));
-    const query = `
-        INSERT INTO temporary_users (email, registration_link, expires_at)
-        VALUES ($1, $2, $3)
-    `;
-    const values = [email, token, expiresAt];
-
-    try {
-        await pool.query(query, values);
-    } catch (error) {
-        console.error('Error saving registration:', error);
-        throw error;
-    }
-};
+}
 
 // Exported function to send registration link
 exports.sendRegistrationLink = async (req, res) => {
@@ -102,19 +82,19 @@ exports.resendRegistrationLink = async (req, res) => {
 // Exported function to permanently register user
 exports.registerUser = async (req, res) => {
     const { dob, name, password, surname } = req.body;
-    const { query } = url.parse(req.url, true);
+    const { query } = require('url').parse(req.url, true);
     const email = query.email;
 
     try {
-        const hashedPassword = await bcrypt.hash(password, saltRounds);
+        const hashedPassword = await bcrypt.hash(password, 10);
 
-        const query = `
+        const insertUserQuery = `
             INSERT INTO users (dob, email, name, password, surname)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id, submitted_at;
         `;
         const values = [dob, email, name, hashedPassword, surname];
-        const result = await pool.query(query, values);
+        const result = await pool.query(insertUserQuery, values);
 
         const { id, submitted_at } = result.rows[0];
 

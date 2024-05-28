@@ -12,7 +12,7 @@ module.exports = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+        const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
 
         const query = 'SELECT * FROM temporary_users WHERE registration_link = $1 AND email = $2';
         const values = [token, email];
@@ -22,10 +22,11 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({ error: 'Link not found in the database or email does not match' });
         }
 
-        const tokenExpiration = new Date(decoded.exp * 1000);
+        const record = result.rows[0];
         const now = new Date();
+        const expiresAt = new Date(record.expires_at);
 
-        if (tokenExpiration < now) {
+        if (expiresAt < now) {
             await pool.query('DELETE FROM temporary_users WHERE registration_link = $1 AND email = $2', values);
             return res.status(401).json({ error: 'Link has expired and has been removed' });
         }
