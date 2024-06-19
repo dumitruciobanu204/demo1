@@ -5,6 +5,20 @@ const url = require('url');
 const { sendRegistrationEmail } = require('../utils/emailSender');
 const { generateRegistrationLink } = require('../utils/jwtHelper');
 
+// Helper function to clean up expired records from the temporary_users table
+async function cleanUpExpiredRecords() {
+    const now = new Date();
+    const query = 'DELETE FROM temporary_users WHERE expires_at < $1';
+    const values = [now];
+
+    try {
+        await pool.query(query, values);
+    } catch (error) {
+        console.error('Error cleaning up expired records:', error);
+        throw error;
+    }
+};
+
 // Helper function to check if email exists in the database
 async function checkIfEmailExists(email) {
     const queryTemp = 'SELECT * FROM temporary_users WHERE email = $1';
@@ -14,6 +28,12 @@ async function checkIfEmailExists(email) {
     try {
         const tempResult = await pool.query(queryTemp, values);
         if (tempResult.rowCount > 0) {
+            const registration = tempResult.rows[0];
+            const now = new Date();
+            if (now > new Date(registration.expires_at)) {
+                await pool.query('DELETE FROM temporary_users WHERE email = $1', [email]);
+                return { exists: false, expired: true };
+            }
             return { exists: true, location: 'temporary_users' };
         }
 
@@ -66,9 +86,16 @@ exports.sendRegistrationLink = async (req, res) => {
     const registrationLink = generateRegistrationLink(email);
 
     try {
+        // Clean up expired records before processing the current request
+        await cleanUpExpiredRecords();
+
         const emailExists = await checkIfEmailExists(email);
         if (emailExists.exists) {
-            return res.status(409).send('Email already exists');
+            if (emailExists.location === 'temporary_users') {
+                return res.status(409).send('Email already exists. Please check your email for the registration link.');
+            } else if (emailExists.location === 'users') {
+                return res.status(409).send('An account with this email already exists.');
+            }
         }
 
         await sendRegistrationEmail(email, registrationLink);

@@ -12,32 +12,28 @@ module.exports = async (req, res, next) => {
     }
 
     try {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
         const query = 'SELECT * FROM temporary_users WHERE registration_link = $1 AND email = $2';
-        const values = [token, email];
+        const values = [`${req.protocol}://${req.get('host')}${req.originalUrl}`, email];
         const result = await pool.query(query, values);
 
         if (result.rowCount === 0) {
             return res.status(401).json({ error: 'Link not found in the database or email does not match' });
         }
 
-        const record = result.rows[0];
+        const registration = result.rows[0];
         const now = new Date();
-        const expiresAt = new Date(record.expires_at);
 
-        if (expiresAt < now) {
-            await pool.query('DELETE FROM temporary_users WHERE registration_link = $1 AND email = $2', values);
-            return res.status(401).json({ error: 'Link has expired and has been removed' });
+        if (now > new Date(registration.expires_at)) {
+            await pool.query('DELETE FROM temporary_users WHERE email = $1', [email]);
+            return res.status(401).json({ error: 'Link expired and has been deleted' });
         }
 
         req.decodedToken = decoded;
+
         next();
     } catch (error) {
-        if (error.name === 'TokenExpiredError') {
-            await pool.query('DELETE FROM temporary_users WHERE registration_link = $1 AND email = $2', [token, email]);
-            return res.status(401).json({ error: 'Link expired and has been removed' });
-        }
         res.status(401).json({ error: 'Link invalid or expired' });
     }
 };

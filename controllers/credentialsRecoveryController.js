@@ -1,15 +1,28 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
-
 const { sendResetPasswordEmail, sendPasswordChangedEmail } = require('../utils/emailSender');
 const { generatePasswordResetLink } = require('../utils/jwtHelper');
+
+// Helper function to clean up expired records from the password_reset_requests table
+async function cleanUpExpiredRecords() {
+    const now = new Date();
+    const query = 'DELETE FROM password_reset_requests WHERE expires_at < $1';
+    const values = [now];
+
+    try {
+        await pool.query(query, values);
+    } catch (error) {
+        console.error('Error cleaning up expired records:', error);
+        throw error;
+    }
+};
 
 // Helper function to mask email
 function maskEmail(email) {
     const atIndex = email.indexOf('@');
     const localPart = email.substring(0, atIndex);
     const domain = email.substring(atIndex);
-    
+
     const firstTwoChars = localPart.substring(0, 3);
     const lastTwoChars = localPart.substring(localPart.length - 2);
 
@@ -50,6 +63,8 @@ exports.resetPasswordLink = async (req, res) => {
     const { email, name, surname, dob } = req.body;
 
     try {
+        await cleanUpExpiredRecords();
+
         const query = 'SELECT * FROM users WHERE email = $1 AND name = $2 AND surname = $3 AND dob = $4';
         const values = [email, name, surname, dob];
         const result = await pool.query(query, values);
@@ -63,14 +78,21 @@ exports.resetPasswordLink = async (req, res) => {
         const checkResult = await pool.query(checkQuery, [email]);
 
         if (checkResult.rowCount > 0) {
-            return res.status(200).json({ message: 'Password reset link already sent' });
+            const resetRequest = checkResult.rows[0];
+            const now = new Date();
+            if (now > new Date(resetRequest.expires_at)) {
+                await pool.query('DELETE FROM password_reset_requests WHERE email = $1', [email]);
+            } else {
+                return res.status(200).json({ message: 'Password reset link already sent' });
+            }
         }
 
         const resetLink = generatePasswordResetLink(email);
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
 
         // Insert the new reset request
-        const insertQuery = 'INSERT INTO password_reset_requests (email, reset_link) VALUES ($1, $2)';
-        await pool.query(insertQuery, [email, resetLink]);
+        const insertQuery = 'INSERT INTO password_reset_requests (email, reset_link, expires_at) VALUES ($1, $2, $3)';
+        await pool.query(insertQuery, [email, resetLink, expiresAt]);
 
         // Send the reset password email
         await sendResetPasswordEmail(email, resetLink);
@@ -87,6 +109,8 @@ exports.resendResetPasswordLink = async (req, res) => {
     const { email, name, surname, dob } = req.body;
 
     try {
+        await cleanUpExpiredRecords();
+
         const query = 'SELECT * FROM users WHERE email = $1 AND name = $2 AND surname = $3 AND dob = $4';
         const values = [email, name, surname, dob];
         const result = await pool.query(query, values);
@@ -95,23 +119,16 @@ exports.resendResetPasswordLink = async (req, res) => {
             return res.status(404).json({ message: 'User not found' });
         }
 
-        // Check if there's an existing reset request for this email
-        const checkQuery = 'SELECT * FROM password_reset_requests WHERE email = $1';
-        const checkResult = await pool.query(checkQuery, [email]);
-
-        if (checkResult.rowCount === 0) {
-            return res.status(404).json({ message: 'Password reset request not found' });
-        }
-
         const resetLink = generatePasswordResetLink(email);
+        const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
 
         // Delete existing reset request
         const deleteQuery = 'DELETE FROM password_reset_requests WHERE email = $1';
         await pool.query(deleteQuery, [email]);
 
         // Insert the new reset request
-        const insertQuery = 'INSERT INTO password_reset_requests (email, reset_link) VALUES ($1, $2)';
-        await pool.query(insertQuery, [email, resetLink]);
+        const insertQuery = 'INSERT INTO password_reset_requests (email, reset_link, expires_at) VALUES ($1, $2, $3)';
+        await pool.query(insertQuery, [email, resetLink, expiresAt]);
 
         // Send the reset password email
         await sendResetPasswordEmail(email, resetLink);
