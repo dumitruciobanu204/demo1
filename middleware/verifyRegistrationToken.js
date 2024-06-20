@@ -19,7 +19,7 @@ module.exports = async (req, res, next) => {
         const decodedEmail = decodeURIComponent(email);
 
         // Construct the full URL as it would be stored in the database
-        const registrationLink = `${req.protocol}://${req.get('host')}${req.originalUrl}`;
+        const registrationLink = `${req.protocol}://${req.get('host')}${req.originalUrl.split('?')[0]}?token=${token}&email=${encodeURIComponent(decodedEmail)}`;
 
         // Fetch the registration link from the database
         const query = 'SELECT * FROM temporary_users WHERE registration_link = $1 AND email = $2';
@@ -27,10 +27,6 @@ module.exports = async (req, res, next) => {
         const result = await pool.query(query, values);
 
         if (result.rowCount === 0) {
-            // Add debugging logs to help trace the issue
-            console.error('Debug Info: Registration link not found in the database.');
-            console.error('Expected link:', registrationLink);
-            console.error('Email:', decodedEmail);
             return res.status(401).json({ error: 'Link not found in the database or email does not match' });
         }
 
@@ -47,6 +43,7 @@ module.exports = async (req, res, next) => {
         next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
+            const decodedEmail = decodeURIComponent(email); // Decode the email again in case of an error
             await pool.query('DELETE FROM temporary_users WHERE email = $1', [decodedEmail]);
             console.log(`Expired registration link for ${decodedEmail} deleted from database.`);
             return res.status(401).json({ error: 'Link invalid or expired' });

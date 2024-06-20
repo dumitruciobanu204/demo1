@@ -110,24 +110,25 @@ exports.sendRegistrationLink = async (req, res) => {
 // Exported function to resend registration link
 exports.resendRegistrationLink = async (req, res) => {
     const { email } = req.body;
+    const decodedEmail = decodeURIComponent(email);  // Decode the email
 
     try {
-        const registration = await getRegistrationByEmail(email);
+        const registration = await getRegistrationByEmail(decodedEmail);
         if (!registration) {
-            return res.status(404).send('Email not found');
+            return res.status(404).json({ error: 'Email not found' });
         }
 
         const now = new Date();
         if (now > new Date(registration.expires_at)) {
-            await pool.query('DELETE FROM temporary_users WHERE email = $1', [email]);
+            await pool.query('DELETE FROM temporary_users WHERE email = $1', [decodedEmail]);
             return res.status(401).json({ error: 'Link invalid or expired' });
         }
 
-        await sendRegistrationEmail(email, registration.registration_link);
-        res.status(200).send('Email resent');
+        await sendRegistrationEmail(decodedEmail, registration.registration_link);
+        res.status(200).json({ message: 'Email resent' });
     } catch (error) {
         console.error('Error resending email:', error);
-        res.status(500).send('Error resending email');
+        res.status(500).json({ error: 'Error resending email' });
     }
 };
 
@@ -135,7 +136,7 @@ exports.resendRegistrationLink = async (req, res) => {
 exports.registerUser = async (req, res) => {
     const { dob, name, password, surname } = req.body;
     const { query } = url.parse(req.url, true);
-    const email = query.email;
+    const email = decodeURIComponent(query.email);  // Decode the email
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
