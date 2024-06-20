@@ -15,7 +15,7 @@ async function cleanUpExpiredRecords() {
         console.error('Error cleaning up expired records:', error);
         throw error;
     }
-};
+}
 
 // Helper function to mask email
 function maskEmail(email) {
@@ -33,15 +33,32 @@ function maskEmail(email) {
     maskedPart += lastTwoChars;
 
     return maskedPart + domain;
-};
+}
 
-// Exported function to recover email address based on provided name, surname, and dob
-exports.recoverEmail = async (req, res) => {
-    const { name, surname, dob } = req.body;
+// Helper function to verify user details
+async function verifyUserDetails(email, name, surname, dob, phone_number) {
+    const query = `
+        SELECT * FROM users 
+        WHERE email = $1 AND name = $2 AND surname = $3 AND dob = $4 AND phone_number = $5
+    `;
+    const values = [email, name, surname, dob, phone_number];
 
     try {
-        const query = 'SELECT email FROM users WHERE name = $1 AND surname = $2 AND dob = $3';
-        const values = [name, surname, dob];
+        const result = await pool.query(query, values);
+        return result.rowCount > 0; // Returns true if user exists with these details
+    } catch (error) {
+        console.error('Error verifying user details:', error);
+        throw error;
+    }
+}
+
+// Exported function to recover email address based on provided name, surname, dob, and phone number
+exports.recoverEmail = async (req, res) => {
+    const { name, surname, dob, phone_number } = req.body;
+
+    try {
+        const query = 'SELECT email FROM users WHERE name = $1 AND surname = $2 AND dob = $3 AND phone_number = $4';
+        const values = [name, surname, dob, phone_number];
         const result = await pool.query(query, values);
 
         if (result.rowCount === 0) {
@@ -60,16 +77,13 @@ exports.recoverEmail = async (req, res) => {
 
 // Function to handle password reset request
 exports.resetPasswordLink = async (req, res) => {
-    const { email, name, surname, dob } = req.body;
+    const { email, name, surname, dob, phone_number } = req.body;
 
     try {
         await cleanUpExpiredRecords();
 
-        const query = 'SELECT * FROM users WHERE email = $1 AND name = $2 AND surname = $3 AND dob = $4';
-        const values = [email, name, surname, dob];
-        const result = await pool.query(query, values);
-
-        if (result.rowCount === 0) {
+        const userExists = await verifyUserDetails(email, name, surname, dob, phone_number);
+        if (!userExists) {
             return res.status(404).json({ message: 'User not found' });
         }
 
@@ -106,16 +120,13 @@ exports.resetPasswordLink = async (req, res) => {
 
 // Function to resend password reset link
 exports.resendResetPasswordLink = async (req, res) => {
-    const { email, name, surname, dob } = req.body;
+    const { email, name, surname, dob, phone_number } = req.body;
 
     try {
         await cleanUpExpiredRecords();
 
-        const query = 'SELECT * FROM users WHERE email = $1 AND name = $2 AND surname = $3 AND dob = $4';
-        const values = [email, name, surname, dob];
-        const result = await pool.query(query, values);
-
-        if (result.rowCount === 0) {
+        const userExists = await verifyUserDetails(email, name, surname, dob, phone_number);
+        if (!userExists) {
             return res.status(404).json({ message: 'User not found' });
         }
 

@@ -134,18 +134,18 @@ exports.resendRegistrationLink = async (req, res) => {
 
 // Exported function to permanently register user
 exports.registerUser = async (req, res) => {
-    const { dob, name, password, surname } = req.body;
+    const { dob, name, password, surname, phone_number } = req.body;
     const { decoded } = req.registration; // Extract decoded token
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const insertQuery = `
-            INSERT INTO users (dob, email, name, password, surname)
-            VALUES ($1, $2, $3, $4, $5)
+            INSERT INTO users (dob, email, name, password, surname, phone_number)
+            VALUES ($1, $2, $3, $4, $5, $6)
             RETURNING id, submitted_at;
         `;
-        const values = [dob, decoded.email, name, hashedPassword, surname];
+        const values = [dob, decoded.email, name, hashedPassword, surname, phone_number];
         const result = await pool.query(insertQuery, values);
 
         const { id, submitted_at } = result.rows[0];
