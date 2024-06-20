@@ -16,7 +16,7 @@ module.exports = async (req, res, next) => {
         const decodedEmail = decodeURIComponent(email);
 
         // Construct the full URL as stored in the database
-        const registrationLink = `${req.protocol}://${req.get('host')}${req.originalUrl.split('?')[0]}?token=${token}&email=${encodeURIComponent(decodedEmail)}`;
+        const registrationLink = `${process.env.BASE_URL}${req.originalUrl.split('?')[0]}?token=${token}&email=${encodeURIComponent(decodedEmail)}`;
 
         // Log the constructed registrationLink
         console.log(`Constructed registrationLink: ${registrationLink}`);
