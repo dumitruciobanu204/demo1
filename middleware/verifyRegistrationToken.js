@@ -27,14 +27,21 @@ module.exports = async (req, res, next) => {
 
         if (now > new Date(registrationRequest.expires_at)) {
             await pool.query('DELETE FROM temporary_users WHERE email = $1', [email]);
-            console.log(`Expired registration link for ${email} deleted from database.`);
+            // console.log(`Expired registration link for ${email} deleted from database.`);
             return res.status(401).json({ error: 'Link invalid or expired' });
         }
 
         req.decodedToken = decoded;
         next();
     } catch (error) {
-        console.error('Error verifying token or deleting expired link:', error);
-        res.status(401).json({ error: 'Link invalid or expired' });
+        if (error.name === 'TokenExpiredError') {
+            // Delete the expired token from the database
+            await pool.query('DELETE FROM temporary_users WHERE email = $1', [email]);
+            console.log(`Expired registration link for ${email} deleted from database.`);
+            return res.status(401).json({ error: 'Link invalid or expired' });
+        } else {
+            console.error('Error verifying token or deleting expired link:', error);
+            return res.status(401).json({ error: 'Link invalid or expired' });
+        }
     }
 };
