@@ -135,8 +135,7 @@ exports.resendRegistrationLink = async (req, res) => {
 // Exported function to permanently register user
 exports.registerUser = async (req, res) => {
     const { dob, name, password, surname } = req.body;
-    const { query } = url.parse(req.url, true);
-    const email = decodeURIComponent(query.email);  // Decode the email
+    const { decoded } = req.registration; // Extract decoded token from middleware
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
@@ -146,12 +145,13 @@ exports.registerUser = async (req, res) => {
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id, submitted_at;
         `;
-        const values = [dob, email, name, hashedPassword, surname];
+        const values = [dob, decoded.email, name, hashedPassword, surname];
         const result = await pool.query(insertQuery, values);
 
         const { id, submitted_at } = result.rows[0];
 
-        await pool.query('DELETE FROM temporary_users WHERE email = $1', [email]);
+        // Delete the registration entry from temporary_users table after successful registration
+        await pool.query('DELETE FROM temporary_users WHERE email = $1', [decoded.email]);
 
         res.status(200).json({ message: 'User registered successfully', id, submitted_at });
     } catch (error) {
