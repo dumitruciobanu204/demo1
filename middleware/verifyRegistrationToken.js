@@ -21,9 +21,18 @@ module.exports = async (req, res, next) => {
         // Log the constructed registrationLink
         console.log(`Constructed registrationLink: ${registrationLink}`);
 
+        // Log the email and token being used for the query
+        console.log(`Email: ${decodedEmail}`);
+        console.log(`Token: ${token}`);
+
         // Fetch the registration link from the database
         const query = 'SELECT * FROM temporary_users WHERE registration_link = $1 AND email = $2';
         const values = [registrationLink, decodedEmail];
+
+        // Log the query and values
+        console.log(`Query: ${query}`);
+        console.log(`Values: ${JSON.stringify(values)}`);
+
         const result = await pool.query(query, values);
 
         // Log the query results
@@ -34,7 +43,8 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({
                 error: 'Link not found in the database or email does not match',
                 registrationLink, // Temporary: Include the constructed link in the response for debugging
-                queryResult: result.rows // Temporary: Include the query result in the response for debugging
+                queryResult: result.rows, // Temporary: Include the query result in the response for debugging
+                decodedEmail // Temporary: Include the decoded email in the response for debugging
             });
         }
 
@@ -47,7 +57,8 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({
                 error: 'Link invalid or expired',
                 registrationLink, // Temporary: Include the constructed link in the response for debugging
-                queryResult: result.rows // Temporary: Include the query result in the response for debugging
+                queryResult: result.rows, // Temporary: Include the query result in the response for debugging
+                decodedEmail // Temporary: Include the decoded email in the response for debugging
             });
         }
 
@@ -61,14 +72,16 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({
                 error: 'Link invalid or expired',
                 registrationLink, // Temporary: Include the constructed link in the response for debugging
-                queryResult: result.rows // Temporary: Include the query result in the response for debugging
+                queryResult: result.rows, // Temporary: Include the query result in the response for debugging
+                decodedEmail // Temporary: Include the decoded email in the response for debugging
             });
         } else {
             console.error('Error verifying token or deleting expired link:', error);
             return res.status(401).json({
                 error: 'Link invalid or expired',
                 registrationLink, // Temporary: Include the constructed link in the response for debugging
-                queryResult: result.rows // Temporary: Include the query result in the response for debugging
+                queryResult: result.rows, // Temporary: Include the query result in the response for debugging
+                decodedEmail // Temporary: Include the decoded email in the response for debugging
             });
         }
     }
