@@ -1,8 +1,5 @@
 const jwt = require('jsonwebtoken');
-const dotenv = require('dotenv');
 const pool = require('../config/db');
-
-dotenv.config();
 
 module.exports = async (req, res, next) => {
     const { token, email } = req.query;
@@ -27,9 +24,6 @@ module.exports = async (req, res, next) => {
         const result = await pool.query(query, values);
 
         if (result.rowCount === 0) {
-            // console.error('Debug Info: Registration link not found in the database.');
-            // console.error('Expected link:', registrationLink);
-            // console.error('Email:', decodedEmail);
             return res.status(401).json({ error: 'Link not found in the database or email does not match' });
         }
 

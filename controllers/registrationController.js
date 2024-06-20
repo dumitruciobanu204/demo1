@@ -137,7 +137,6 @@ exports.registerUser = async (req, res) => {
     const { dob, name, password, surname } = req.body;
     const { query } = url.parse(req.url, true);
     const email = decodeURIComponent(query.email);  // Decode the email
-    console.log(email);
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
