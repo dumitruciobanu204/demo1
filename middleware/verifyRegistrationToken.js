@@ -22,18 +22,19 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({ error: 'Link not found in the database or email does not match' });
         }
 
-        const registration = result.rows[0];
+        const registrationRequest = result.rows[0];
         const now = new Date();
 
-        if (now > new Date(registration.expires_at)) {
+        if (now > new Date(registrationRequest.expires_at)) {
             await pool.query('DELETE FROM temporary_users WHERE email = $1', [email]);
-            return res.status(401).json({ error: 'Link expired and has been deleted' });
+            console.log(`Expired registration link for ${email} deleted from database.`);
+            return res.status(401).json({ error: 'Link invalid or expired' });
         }
 
         req.decodedToken = decoded;
-
         next();
     } catch (error) {
+        console.error('Error verifying token or deleting expired link:', error);
         res.status(401).json({ error: 'Link invalid or expired' });
     }
 };

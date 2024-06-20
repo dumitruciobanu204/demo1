@@ -1,5 +1,6 @@
 const pool = require('../config/db');
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const url = require('url');
 
 const { sendRegistrationEmail } = require('../utils/emailSender');
@@ -17,7 +18,7 @@ async function cleanUpExpiredRecords() {
         console.error('Error cleaning up expired records:', error);
         throw error;
     }
-};
+}
 
 // Helper function to check if email exists in the database
 async function checkIfEmailExists(email) {
@@ -47,7 +48,7 @@ async function checkIfEmailExists(email) {
         console.error('Error checking email existence:', error);
         throw error;
     }
-};
+}
 
 // Helper function to get registration details by email
 async function getRegistrationByEmail(email) {
@@ -61,11 +62,11 @@ async function getRegistrationByEmail(email) {
         console.error('Error fetching temporary_users by email:', error);
         throw error;
     }
-};
+}
 
 // Helper function to save registration to the temporary_users table
 async function saveRegistration(email, token) {
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
+    const expiresAt = new Date(Date.now() + 3 * 60 * 1000); // 3 minutes from now for testing
     const query = `
         INSERT INTO temporary_users (email, registration_link, expires_at)
         VALUES ($1, $2, $3)
@@ -78,7 +79,7 @@ async function saveRegistration(email, token) {
         console.error('Error saving registration:', error);
         throw error;
     }
-};
+}
 
 // Exported function to send registration link
 exports.sendRegistrationLink = async (req, res) => {
@@ -105,7 +106,7 @@ exports.sendRegistrationLink = async (req, res) => {
         console.error('Error sending email or saving registration:', error);
         res.status(500).send('Error sending email');
     }
-};
+}
 
 // Exported function to resend registration link
 exports.resendRegistrationLink = async (req, res) => {
@@ -123,15 +124,39 @@ exports.resendRegistrationLink = async (req, res) => {
         console.error('Error resending email:', error);
         res.status(500).send('Error resending email');
     }
-};
+}
 
 // Exported function to permanently register user
 exports.registerUser = async (req, res) => {
     const { dob, name, password, surname } = req.body;
     const { query } = url.parse(req.url, true);
     const email = query.email;
+    const token = query.token;
+
+    if (!token || !email) {
+        return res.status(400).json({ error: 'Token and email are required' });
+    }
 
     try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+        const selectQuery = 'SELECT * FROM temporary_users WHERE registration_link = $1 AND email = $2';
+        const values = [`${req.protocol}://${req.get('host')}${req.originalUrl}`, email];
+        const result = await pool.query(selectQuery, values);
+
+        if (result.rowCount === 0) {
+            return res.status(401).json({ error: 'Link not found in the database or email does not match' });
+        }
+
+        const registrationRequest = result.rows[0];
+        const now = new Date();
+
+        if (now > new Date(registrationRequest.expires_at)) {
+            await pool.query('DELETE FROM temporary_users WHERE email = $1', [email]);
+            console.log(`Expired registration link for ${email} deleted from database.`);
+            return res.status(401).json({ error: 'Link invalid or expired' });
+        }
+
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const insertQuery = `
@@ -139,10 +164,10 @@ exports.registerUser = async (req, res) => {
             VALUES ($1, $2, $3, $4, $5)
             RETURNING id, submitted_at;
         `;
-        const values = [dob, email, name, hashedPassword, surname];
-        const result = await pool.query(insertQuery, values);
+        const insertValues = [dob, email, name, hashedPassword, surname];
+        const insertResult = await pool.query(insertQuery, insertValues);
 
-        const { id, submitted_at } = result.rows[0];
+        const { id, submitted_at } = insertResult.rows[0];
 
         await pool.query('DELETE FROM temporary_users WHERE email = $1', [email]);
 
@@ -151,4 +176,4 @@ exports.registerUser = async (req, res) => {
         console.error('Error registering user:', error);
         res.status(500).json({ error: 'Error registering user' });
     }
-};
+}
