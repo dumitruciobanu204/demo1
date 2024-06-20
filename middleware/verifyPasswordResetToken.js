@@ -14,8 +14,11 @@ module.exports = async (req, res, next) => {
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
+        // Construct the reset link using the BASE_URL environment variable
+        const resetLink = `${process.env.BASE_URL}${req.originalUrl}`;
+
         const query = 'SELECT * FROM password_reset_requests WHERE reset_link = $1 AND email = $2';
-        const values = [`${req.protocol}://${req.get('host')}${req.originalUrl}`, email];
+        const values = [resetLink, email];
         const result = await pool.query(query, values);
 
         if (result.rowCount === 0) {
