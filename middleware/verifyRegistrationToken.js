@@ -15,7 +15,7 @@ module.exports = async (req, res, next) => {
         // Decode the email address
         const decodedEmail = decodeURIComponent(email);
 
-        // Construct the full URL as it would be stored in the database
+        // Construct the full URL as stored in the database
         const registrationLink = `${req.protocol}://${req.get('host')}${req.originalUrl.split('?')[0]}?token=${token}&email=${encodeURIComponent(decodedEmail)}`;
 
         // Fetch the registration link from the database
@@ -36,11 +36,7 @@ module.exports = async (req, res, next) => {
             return res.status(401).json({ error: 'Link invalid or expired' });
         }
 
-        req.registration = {
-            decoded,
-            email: decodedEmail
-        };
-
+        req.registration = { decoded, registrationRequest };
         next();
     } catch (error) {
         if (error.name === 'TokenExpiredError') {
@@ -48,12 +44,9 @@ module.exports = async (req, res, next) => {
             await pool.query('DELETE FROM temporary_users WHERE email = $1', [decodedEmail]);
             console.log(`Expired registration link for ${decodedEmail} deleted from database.`);
             return res.status(401).json({ error: 'Link invalid or expired' });
-        } else if (error.name === 'JsonWebTokenError') {
-            console.error('JWT Error:', error.message);
-            return res.status(401).json({ error: 'Invalid token' });
         } else {
-            console.error('Database query error:', error.message);
-            return res.status(500).json({ error: 'Database query error' });
+            console.error('Error verifying token or deleting expired link:', error);
+            return res.status(401).json({ error: 'Link invalid or expired' });
         }
     }
 };

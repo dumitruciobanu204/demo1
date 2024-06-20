@@ -135,7 +135,7 @@ exports.resendRegistrationLink = async (req, res) => {
 // Exported function to permanently register user
 exports.registerUser = async (req, res) => {
     const { dob, name, password, surname } = req.body;
-    const { decoded } = req.registration; // Extract decoded token from middleware
+    const { decoded, registrationRequest } = req.registration; // Extract decoded token and registration request
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
