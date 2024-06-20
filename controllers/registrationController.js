@@ -92,18 +92,18 @@ exports.sendRegistrationLink = async (req, res) => {
         const emailExists = await checkIfEmailExists(email);
         if (emailExists.exists) {
             if (emailExists.location === 'temporary_users') {
-                return res.status(409).send('Email already exists. Please check your email for the registration link.');
+                return res.status(409).json({ message: 'Email already exists. Please check your email for the registration link.' });
             } else if (emailExists.location === 'users') {
-                return res.status(409).send('An account with this email already exists.');
+                return res.status(409).json({ message: 'An account with this email already exists.' });
             }
         }
 
         await sendRegistrationEmail(email, registrationLink);
         await saveRegistration(email, registrationLink);
-        res.status(200).send('Email sent');
+        res.status(200).json({ message: 'Email sent' });
     } catch (error) {
         console.error('Error sending email or saving registration:', error);
-        res.status(500).send('Error sending email');
+        res.status(500).json({ message: 'Error sending email' });
     }
 };
 
@@ -135,7 +135,7 @@ exports.resendRegistrationLink = async (req, res) => {
 // Exported function to permanently register user
 exports.registerUser = async (req, res) => {
     const { dob, name, password, surname } = req.body;
-    const { decoded, registrationRequest } = req.registration; // Extract decoded token and registration request
+    const { decoded } = req.registration; // Extract decoded token
 
     try {
         const hashedPassword = await bcrypt.hash(password, 10);
