@@ -65,7 +65,7 @@ async function getRegistrationByEmail(email) {
 
 // Helper function to save registration to the temporary_users table
 async function saveRegistration(email, token) {
-    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 3 minutes from now
+    const expiresAt = new Date(Date.now() + 30 * 60 * 1000); // 30 minutes from now
     const query = `
         INSERT INTO temporary_users (email, registration_link, expires_at)
         VALUES ($1, $2, $3)
