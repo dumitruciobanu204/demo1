@@ -4,8 +4,8 @@ const cors = require('cors');
 
 // Routers
 const registerRouter = require('./routes/registerRouter'); // Register router
-const loginRouter = require('./routes/loginRouter'); // Login router
 const recoveryRouter = require('./routes/recoveryRouter'); // Credentials recovery router
+const loginRouter = require('./routes/loginRouter'); // Login router
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -23,8 +23,8 @@ app.use(cors());
 
 // Use routes
 app.use('/api/auth', registerRouter);  // Registration routes
-app.use('/api/auth', loginRouter); // Login routes
 app.use('/api/auth', recoveryRouter); // Credentials recovery routes
+app.use('/api/auth', loginRouter); // Login routes
 
 app.listen(PORT, () => {
     console.log(`app on port ${PORT}`);
