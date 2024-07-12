@@ -22,32 +22,27 @@ The project adopts a modular architecture, organizing functionalities into separ
 
 ## Folder Structure
 
-root/
+root/ 
 │
-├── config/
-│ └── db.js
-│
-├── controllers/
-│ ├── credentialsRecoveryController.js
-│ ├── loginController.js
-│ └── registrationController.js
-│
-├── middleware/
-│ ├── loginMiddleware.js
-│ ├── verifyLoginToken.js
-│ ├── verifyPasswordResetToken.js
-│ └── verifyRegistrationToken.js
-│
-├── routes/
-│ ├── loginRouter.js
-│ ├── recoveryRouter.js
-│ └── registerRouter.js
-│
-├── utils/
-│ ├── emailSender.js
-│ └── jwtHelper.js
-│
-└── index.js
+├── config/ 
+│ └── db.js 
+│ ├── controllers/ 
+│ ├── credentialsRecoveryController.js 
+│ ├── loginController.js 
+│ └── registrationController.js 
+│ ├── middleware/ 
+│ ├── loginMiddleware.js 
+│ ├── verifyLoginToken.js 
+│ ├── verifyPasswordResetToken.js 
+│ └── verifyRegistrationToken.js 
+│ ├── routes/ 
+│ ├── loginRouter.js 
+│ ├── recoveryRouter.js 
+│ └── registerRouter.js 
+│ ├── utils/ 
+│ ├── emailSender.js 
+│ └── jwtHelper.js 
+│ └── index.js
 
 ## Environment Variables
 
