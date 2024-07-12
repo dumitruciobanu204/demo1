@@ -1,5 +1,5 @@
 
-This Node.js application provides comprehensive user authentication and management features, including registration, login, password recovery, and email verification. It leverages PostgreSQL for database storage, JWT for secure authentication tokens, and NodeMailer for email communication. Currently, the application focuses on essential user management operations, with plans for expanding its functionality in the future.
+This Node.js application provides user authentication and management features, including registration, login, password recovery, and email verification. It leverages PostgreSQL for database storage, JWT for secure authentication tokens, and NodeMailer for email communication. Currently, the application focuses on essential user management operations, with plans for expanding its functionality in the future.
 
 ## Table of Contents
 
@@ -22,44 +22,44 @@ The project adopts a modular architecture, organizing functionalities into separ
 
 ## Folder Structure
 
-root/ 
-│
-├── config/ 
-│ └── db.js 
-│ ├── controllers/ 
-│ ├── credentialsRecoveryController.js 
-│ ├── loginController.js 
-│ └── registrationController.js 
-│ ├── middleware/ 
-│ ├── loginMiddleware.js 
-│ ├── verifyLoginToken.js 
-│ ├── verifyPasswordResetToken.js 
-│ └── verifyRegistrationToken.js 
-│ ├── routes/ 
-│ ├── loginRouter.js 
-│ ├── recoveryRouter.js 
-│ └── registerRouter.js 
-│ ├── utils/ 
-│ ├── emailSender.js 
-│ └── jwtHelper.js 
-│ └── index.js
+root/ <br />
+│ <br />
+├── config/ <br />
+│ └── db.js <br />
+├── controllers/ <br />
+│ ├── credentialsRecoveryController.js <br />
+│ ├── loginController.js <br />
+│ └── registrationController.js <br />
+├── middleware/ <br />
+│ ├── loginMiddleware.js <br />
+│ ├── verifyLoginToken.js <br />
+│ ├── verifyPasswordResetToken.js <br />
+│ └── verifyRegistrationToken.js <br />
+├── routes/ <br />
+│ ├── loginRouter.js <br /> 
+│ ├── recoveryRouter.js <br />
+│ └── registerRouter.js <br />
+├── utils/ <br />
+│ ├── emailSender.js <br />
+│ └── jwtHelper.js <br />
+└── index.js <br />
 
 ## Environment Variables
 
 The application relies on environment variables for configuration. Ensure these variables are set in a `.env` file at the root of the project:
 
-PGHOST=<your_postgresql_host>
-PGPORT=<your_postgresql_port>
-PGDATABASE=<your_postgresql_database>
-PGUSER=<your_postgresql_user>
-PGPASSWORD=<your_postgresql_password>
-JWT_SECRET=<your_jwt_secret>
-EMAIL_USER=<your_email_address>
-EMAIL_PASS=<your_email_password>
-SMTP_HOST=<your_smtp_host>
-SMTP_PORT=<your_smtp_port>
-SMTP_SECURE=<true_or_false_based_on_your_smtp>
-BASE_URL=<your_base_url>
+PGHOST=<your_postgresql_host> <br />
+PGPORT=<your_postgresql_port> <br />
+PGDATABASE=<your_postgresql_database> <br />
+PGUSER=<your_postgresql_user> <br />
+PGPASSWORD=<your_postgresql_password> <br />
+JWT_SECRET=<your_jwt_secret> <br />
+EMAIL_USER=<your_email_address> <br />
+EMAIL_PASS=<your_email_password> <br />
+SMTP_HOST=<your_smtp_host> <br />
+SMTP_PORT=<your_smtp_port> <br />
+SMTP_SECURE=<true_or_false_based_on_your_smtp> <br />
+BASE_URL=<your_base_url> <br />
 
 ## Usage
 
